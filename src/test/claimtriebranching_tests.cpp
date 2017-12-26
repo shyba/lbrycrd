@@ -506,6 +506,24 @@ BOOST_AUTO_TEST_CASE(claimtriebranching_support_on_abandon_2)
     fixture.IncrementBlocks(1);
 }
 
+BOOST_AUTO_TEST_CASE(claimtriebranching_update_on_support)
+{
+    // make sure that support on abandon bug does not affect
+    // updates happening on the same block as a support
+    ClaimTrieChainFixture fixture;
+    CMutableTransaction tx1 = fixture.MakeClaim(fixture.GetCoinbase(),"test","one",3);
+    fixture.IncrementBlocks(1);
+
+    CMutableTransaction s1 = fixture.MakeSupport(fixture.GetCoinbase(),tx1,"test",1);
+    CMutableTransaction u1 = fixture.MakeUpdate(tx1,"test","two",ClaimIdHash(tx1.GetHash(),0),1);
+    fixture.IncrementBlocks(1);
+
+    BOOST_CHECK(is_best_claim("test",u1));
+    BOOST_CHECK(best_claim_effective_amount_equals("test",2));
+}
+
+
+
 /*
     support spend
         spending suport on winning claim will cause it to lose
