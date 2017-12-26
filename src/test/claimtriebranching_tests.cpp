@@ -374,6 +374,7 @@ BOOST_AUTO_TEST_CASE(claimtriebranching_claim)
     fixture.DecrementBlocks(10); 
 
 }
+
 /*
     spent claims
         spending winning claim will make losing active claim winner    
@@ -430,6 +431,7 @@ BOOST_AUTO_TEST_CASE(claimtriebranching_spend_claim)
     fixture.DecrementBlocks(1);
 }
 
+
 /*
     supports
         check support with wrong name does not work 
@@ -470,7 +472,40 @@ BOOST_AUTO_TEST_CASE(claimtriebranching_support)
     BOOST_CHECK(is_best_claim("test",tx4)); 
     BOOST_CHECK(best_claim_effective_amount_equals("test",2));
     fixture.DecrementBlocks(10);
-}   
+}
+
+/*
+    support on abandon
+        supporting a claim the same block it gets abandoned,
+        or abandoing a support the same block claim gets abandoned,
+        when there were no other claims would crash lbrycrd,
+        make sure this doesn't happen (https://github.com/lbryio/lbrycrd/issues/77)
+*/
+BOOST_AUTO_TEST_CASE(claimtriebranching_support_on_abandon)
+{
+    ClaimTrieChainFixture fixture;
+    CMutableTransaction tx1 = fixture.MakeClaim(fixture.GetCoinbase(),"test","one",2);
+    fixture.IncrementBlocks(1);
+
+    //supporting and abandoing on the same block will cause it to crash
+    CMutableTransaction s1 = fixture.MakeSupport(fixture.GetCoinbase(),tx1,"test",1);
+    fixture.Spend(tx1);
+    fixture.IncrementBlocks(1);
+}
+
+BOOST_AUTO_TEST_CASE(claimtriebranching_support_on_abandon_2)
+{
+    ClaimTrieChainFixture fixture;
+    CMutableTransaction tx1 = fixture.MakeClaim(fixture.GetCoinbase(),"test","one",2);
+    CMutableTransaction s1 = fixture.MakeSupport(fixture.GetCoinbase(),tx1,"test",1);
+    fixture.IncrementBlocks(1);
+
+    //abandoning a support and abandoing claim on the same block will cause it to crash
+    fixture.Spend(tx1);
+    fixture.Spend(s1);
+    fixture.IncrementBlocks(1);
+}
+
 /*
     support spend
         spending suport on winning claim will cause it to lose
