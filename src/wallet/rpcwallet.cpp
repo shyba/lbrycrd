@@ -21,6 +21,8 @@
 #include "nameclaim.h"
 
 #include <stdint.h>
+#include <sstream>
+#include <stdlib.h>
 
 #include <boost/assign/list_of.hpp>
 
@@ -426,7 +428,10 @@ UniValue claimname(const UniValue& params, bool fHelp)
         );
     string sName = params[0].get_str();
     string sValue = params[1].get_str();
-    std::vector<unsigned char> vchName (sName.begin(), sName.end());
+    std::vector<unsigned char> vchName; //(sName.begin(), sName.end());
+    unsigned char name = std::atoi(sName.c_str());
+    LogPrintf("claimname: claiming %s, %i\n",sName, name);
+    vchName.push_back(name);
     std::vector<unsigned char> vchValue (sValue.begin(), sValue.end());
     CAmount nAmount = AmountFromValue(params[2]);
 
