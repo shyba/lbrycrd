@@ -18,6 +18,7 @@
 #include <iostream>
 #include "test/test_bitcoin.h"
 
+#include "rpc/claimtrie.cpp"
 using namespace std;
 
 CScript scriptPubKey = CScript() << OP_TRUE;
@@ -217,9 +218,14 @@ BOOST_AUTO_TEST_CASE(claimtrie_merkle_hash)
     hash5.SetHex("56cdfe5695d23c0cc8d52b05bd18e438c9efb7b9f22e9fe3f9179533f5c2468b");
     uint256 hashSteve = ntState.getMerkleHash();
     BOOST_CHECK(hash5 == hashSteve);
-    
+   
+    std::cout<<"HERE:"<< ntState.getMerkleHash().GetHex()<<"\n";
     ntState.removeClaimFromTrie(std::string("testtesttesttest"), tx5OutPoint, unused);
-    
+   
+    CClaimTrieProof proof = ntState.getProofForName("testtesttesttest");
+    std::cout<<proofToJSON(proof).write();
+
+    std::cout<<"HERE2"<< ntState.getMerkleHash().GetHex()<<"\n";
     uint256 hash2check = ntState.getMerkleHash();
     BOOST_CHECK(hash2check == hash2);
     ntState.flush();
