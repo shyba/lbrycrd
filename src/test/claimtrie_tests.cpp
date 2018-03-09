@@ -195,6 +195,8 @@ BOOST_AUTO_TEST_CASE(claimtrie_merkle_hash)
     
     BOOST_CHECK(hash2Check == hash2New);
     
+    std::cout << "Passed simplified merkle_hash test, exiting now!" << std::endl << std::endl;
+    
     exit(1);
 }
 
