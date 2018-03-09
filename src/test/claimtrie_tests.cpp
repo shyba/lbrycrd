@@ -174,6 +174,39 @@ BOOST_AUTO_TEST_CASE(claimtrie_merkle_hash)
     uint160 hash160;
     CMutableTransaction tx1 = BuildTransaction(hash0);
     COutPoint tx1OutPoint(tx1.GetHash(), 0);
+
+    uint256 hash1New;
+    hash1New.SetHex("5f28e60e751fa062f36bf4a51be0bfe7e37af088116b17a9adfe13825aba2868");
+    
+    uint256 hash2New(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
+    
+    BOOST_CHECK(pclaimTrie->empty());
+
+    CClaimTrieCache ntState(pclaimTrie, false);
+    ntState.insertClaimIntoTrie(std::string("test"), CClaimValue(tx1OutPoint, hash160, 50, 100, 200));
+
+    uint256 hash1Check = ntState.getMerkleHash();
+    
+    BOOST_CHECK(hash1Check == hash1New);
+    
+    ntState.removeClaimFromTrie(std::string("test"), tx1OutPoint, unused);
+    
+    uint256 hash2Check = ntState.getMerkleHash();
+    
+    BOOST_CHECK(hash2Check == hash2New);
+    
+    exit(1);
+}
+
+#if 0
+BOOST_AUTO_TEST_CASE(claimtrie_merkle_hash)
+{
+    fRequireStandard = false;
+    CClaimValue unused;
+    uint256 hash0(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
+    uint160 hash160;
+    CMutableTransaction tx1 = BuildTransaction(hash0);
+    COutPoint tx1OutPoint(tx1.GetHash(), 0);
     CMutableTransaction tx2 = BuildTransaction(tx1.GetHash());
     COutPoint tx2OutPoint(tx2.GetHash(), 0);
     CMutableTransaction tx3 = BuildTransaction(tx2.GetHash());
@@ -286,6 +319,7 @@ BOOST_AUTO_TEST_CASE(claimtrie_merkle_hash)
     BOOST_CHECK(pclaimTrie->getMerkleHash() == hash0);
     BOOST_CHECK(pclaimTrie->checkConsistency());
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(claimtrie_insert_update_claim)
 {
