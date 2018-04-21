@@ -367,6 +367,13 @@ UniValue getclaimbyid(const UniValue& params, bool fHelp)
                         "  \"amount\"              (numeric) txout value\n"
                         "  \"effective amount\"    (numeric) txout amount plus amount from all supports associated with the claim\n"
                         "  \"height\"              (numeric) the height of the block in which this claim transaction is located\n"
+                        "  \"supports\" : [ (array of object) supports for this claim\n"
+                        "    \"txid\"     (string) the txid of the support\n"
+                        "    \"n\"        (numeric) the index of the support in the transaction's list of outputs\n"
+                        "    \"height\"  (numeric) the height at which the support was included in the blockchain\n"
+                        "    \"valid at height\" (numeric) the height at which the support became/becomes valid\n"
+                        "    \"amount\"  (numeric) the amount of the support\n"
+                        "  ]\n"
                         "}\n"
         );
 
@@ -390,7 +397,27 @@ UniValue getclaimbyid(const UniValue& params, bool fHelp)
                     claim.push_back(Pair("amount", itClaims->nAmount));
                     claim.push_back(Pair("effective amount",
                                          pclaimTrie->getEffectiveAmountForClaim(it->first, itClaims->claimId)));
+
+                    claimsForNameType claims = pclaimTrie->getClaimsForName(it->first);
+                    CAmount effectiveAmount = itClaims->nAmount;
+                    UniValue supportObjs(UniValue::VARR);
+                    for (std::vector<CSupportValue>::iterator itSupports=claims.supports.begin(); itSupports!=claims.supports.end(); ++itSupports)
+                    {
+                        if (itSupports->supportedClaimId == claimId && itSupports->nValidAtHeight < chainActive.Height())
+                        {
+                            UniValue supportObj(UniValue::VOBJ);
+                            supportObj.push_back(Pair("txid", itSupports->outPoint.hash.GetHex()));
+                            supportObj.push_back(Pair("n", (int)itSupports->outPoint.n));
+                            supportObj.push_back(Pair("height", itSupports->nHeight));
+                            supportObj.push_back(Pair("valid at height", itSupports->nValidAtHeight));
+                            supportObj.push_back(Pair("amount", itSupports->nAmount));
+                            supportObjs.push_back(supportObj);
+                            effectiveAmount += itSupports->nAmount;
+                        }
+                    }
+                    claim.push_back(Pair("effective amount", effectiveAmount));
                     claim.push_back(Pair("height", itClaims->nHeight));
+                    claim.push_back(Pair("supports", supportObjs));
                     return claim;
                 }
             }
