@@ -387,9 +387,27 @@ UniValue getclaimbyid(const UniValue& params, bool fHelp)
         claim.push_back(Pair("txid", claimValue.outPoint.hash.GetHex()));
         claim.push_back(Pair("n", (int) claimValue.outPoint.n));
         claim.push_back(Pair("amount", claimValue.nAmount));
-        claim.push_back(Pair("effective amount",
-                             pclaimTrie->getEffectiveAmountForClaim(name, claimValue.claimId)));
+        claimsForNameType claims = pclaimTrie->getClaimsForName(name);
+        CAmount effectiveAmount = claimValue.nAmount;
+        UniValue supportObjs(UniValue::VARR);
+        for (std::vector<CSupportValue>::iterator itSupports=claims.supports.begin(); itSupports!=claims.supports.end(); ++itSupports)
+        {
+            if (itSupports->supportedClaimId == claimId && itSupports->nValidAtHeight < chainActive.Height())
+            {
+                UniValue supportObj(UniValue::VOBJ);
+                supportObj.push_back(Pair("txid", itSupports->outPoint.hash.GetHex()));
+                supportObj.push_back(Pair("n", (int)itSupports->outPoint.n));
+                supportObj.push_back(Pair("height", itSupports->nHeight));
+                supportObj.push_back(Pair("valid at height", itSupports->nValidAtHeight));
+                supportObj.push_back(Pair("amount", itSupports->nAmount));
+                supportObjs.push_back(supportObj);
+                effectiveAmount += itSupports->nAmount;
+            }
+        }
+        claim.push_back(Pair("effective amount", effectiveAmount));
         claim.push_back(Pair("height", claimValue.nHeight));
+        claim.push_back(Pair("valid at height", claimValue.nValidAtHeight));
+        claim.push_back(Pair("supports", supportObjs));
     }
     return claim;
 }
